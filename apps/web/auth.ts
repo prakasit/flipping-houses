@@ -213,25 +213,3 @@ const handler = NextAuth(authOptions);
 // Export for API routes
 export { handler as GET, handler as POST };
 
-// For middleware, we'll use a simpler approach that works in Edge Runtime
-export const auth = async (req: any) => {
-  try {
-    // In Edge Runtime, we can't use getToken directly
-    // Instead, check for session cookie
-    const sessionToken = req.cookies.get('next-auth.session-token')?.value || 
-                        req.cookies.get('__Secure-next-auth.session-token')?.value;
-    
-    if (!sessionToken) {
-      return { user: null };
-    }
-
-    // For Edge Runtime, we'll decode the token manually if needed
-    // But for now, just return that a token exists
-    // The actual validation will happen in API routes using getServerSession
-    return { user: { hasToken: true } };
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    return { user: null };
-  }
-};
-

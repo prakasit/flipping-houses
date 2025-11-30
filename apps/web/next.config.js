@@ -3,7 +3,7 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [/middleware-manifest\.json$/, /middleware\.ts$/],
   fallbacks: {
     document: '/offline.html',
   },
@@ -52,6 +52,19 @@ const nextConfig = {
   transpilePackages: ['@renovate-tracker/db', '@renovate-tracker/types', '@renovate-tracker/utils'],
   images: {
     domains: ['lh3.googleusercontent.com'],
+  },
+  webpack: (config, { isServer }) => {
+    // Ensure middleware doesn't bundle Node.js-specific modules
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+      };
+    }
+    return config;
   },
 };
 
