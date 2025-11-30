@@ -2,6 +2,9 @@
   "name": "@renovate-tracker/utils",
   "version": "1.0.0",
   "main": "index.ts",
+  "scripts": {
+    "build": "tsc --emitDeclarationOnly --declaration --outDir dist"
+  },
   "dependencies": {
     "@renovate-tracker/types": "workspace:*"
   }
