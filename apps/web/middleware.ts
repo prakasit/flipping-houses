@@ -1,56 +1,33 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/invite');
   const isApiRoute = pathname.startsWith('/api');
+  const isStaticFile = pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot)$/);
 
-  // Always allow auth pages and API routes
-  if (isAuthPage || isApiRoute) {
+  // Always allow auth pages, API routes, and static files
+  if (isAuthPage || isApiRoute || isStaticFile) {
     return NextResponse.next();
   }
 
-  try {
-    // Check if NEXTAUTH_SECRET is set
-    if (!process.env.NEXTAUTH_SECRET) {
-      console.error('[Middleware] NEXTAUTH_SECRET is not set');
-      return NextResponse.redirect(new URL('/login?error=Configuration', req.url));
-    }
+  // Check for session token cookie
+  const sessionToken = req.cookies.get('next-auth.session-token')?.value || 
+                      req.cookies.get('__Secure-next-auth.session-token')?.value;
 
-    // Get JWT token from cookie
-    const token = await getToken({ 
-      req, 
-      secret: process.env.NEXTAUTH_SECRET 
-    });
-
-    // If no token, redirect to login
-    if (!token || !token.email) {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
-
-    // Check if user is active (from JWT token)
-    if (token.status !== 'ACTIVE') {
-      return NextResponse.redirect(new URL('/login?error=inactive', req.url));
-    }
-
-    // Check admin routes
-    const isAdminRoute = pathname.startsWith('/admin');
-    if (isAdminRoute && token.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    // Log error but don't expose details
-    console.error('[Middleware] Error:', error instanceof Error ? error.message : 'Unknown error');
-    // Redirect to login on error
-    return NextResponse.redirect(new URL('/login?error=Configuration', req.url));
+  // If no session token, redirect to login
+  if (!sessionToken) {
+    return NextResponse.redirect(new URL('/login', req.url));
   }
+
+  // If session token exists, allow request through
+  // The actual authentication check will be done in page components using getServerSession
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|workbox-.*\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  runtime: 'edge',
 };
 
