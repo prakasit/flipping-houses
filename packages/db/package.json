@@ -2,6 +2,7 @@
   "name": "@renovate-tracker/db",
   "version": "1.0.0",
   "main": "index.ts",
+  "types": "index.ts",
   "scripts": {
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
