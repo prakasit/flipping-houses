@@ -1,0 +1,159 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  emailVerified DateTime?
+  image         String?
+  googleId      String?      @unique
+  role          UserRole     @default(USER)
+  status        UserStatus   @default(PENDING)
+  invitedAt     DateTime?
+  activatedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  DISABLED
+}
+
+model InviteToken {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+}
+
+model LoanBudget {
+  id                 String           @id @default(cuid())
+  title              String
+  totalBudget        Int
+  purchasePrice      Int              // ราคาซื้อเข้า
+  expectedSellingPrice Int?           // ราคาคาดว่าจะขายออก
+  actualSellingPrice Int?              // ราคาขายออก
+  bankClosingBalance Int?             // ยอดปิดบัญชีธนาคาร
+  startDate          DateTime?
+  endDate            DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  withdraws          WithdrawRequest[]
+  images             ProjectImage[]
+}
+
+model WithdrawRequest {
+  id             String        @id @default(cuid())
+  loanBudget     LoanBudget    @relation(fields: [loanBudgetId], references: [id])
+  loanBudgetId   String
+  amount         Int
+  description    String
+  requiresExpense Boolean      @default(true) // ต้องมีการทำ expense หรือไม่
+  status         WithdrawStatus @default(PENDING)
+  requestedAt    DateTime      @default(now())
+  approvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  expenses       Expense[]
+  slips          WithdrawSlip[]
+}
+
+enum WithdrawStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Expense {
+  id          String        @id @default(cuid())
+  withdraw    WithdrawRequest @relation(fields: [withdrawId], references: [id])
+  withdrawId  String
+  amount      Int
+  description String
+  spentDate   DateTime
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  slips       ExpenseSlip[]
+}
+
+model ExpenseSlip {
+  id         String   @id @default(cuid())
+  expense    Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expenseId  String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+}
+
+model WithdrawSlip {
+  id         String         @id @default(cuid())
+  withdraw   WithdrawRequest @relation(fields: [withdrawId], references: [id], onDelete: Cascade)
+  withdrawId String
+  fileUrl    String
+  uploadedAt DateTime       @default(now())
+}
+
+model ProjectImage {
+  id          String     @id @default(cuid())
+  loanBudget  LoanBudget @relation(fields: [loanBudgetId], references: [id], onDelete: Cascade)
+  loanBudgetId String
+  fileUrl     String
+  type        String     // "before" or "after"
+  uploadedAt  DateTime   @default(now())
+}
+

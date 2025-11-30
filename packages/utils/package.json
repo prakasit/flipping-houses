@@ -1,0 +1,9 @@
+{
+  "name": "@renovate-tracker/utils",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@renovate-tracker/types": "workspace:*"
+  }
+}
+
