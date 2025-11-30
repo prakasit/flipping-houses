@@ -9,7 +9,7 @@ import { currencyFormat, dateFormat, calculateWithdrawSummary } from '@renovate-
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
-export default function ProjectDetailPage() {
+function ProjectDetailPageContent() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
@@ -659,5 +659,19 @@ export default function ProjectDetailPage() {
       )}
     </Layout>
   );
+}
+
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+
+export default async function ProjectDetailPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  return <ProjectDetailPageContent />;
 }
 

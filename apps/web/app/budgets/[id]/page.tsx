@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout';
 import { currencyFormat, dateFormat, calculateWithdrawSummary } from '@renovate-tracker/utils';
 import Link from 'next/link';
 
-export default function BudgetDetailPage() {
+function BudgetDetailPageContent() {
   const params = useParams();
   const router = useRouter();
   const [budget, setBudget] = useState<any>(null);
@@ -193,5 +193,19 @@ export default function BudgetDetailPage() {
       </div>
     </Layout>
   );
+}
+
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+
+export default async function BudgetDetailPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  return <BudgetDetailPageContent />;
 }
 

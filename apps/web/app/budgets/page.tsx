@@ -6,7 +6,7 @@ import { Layout } from '@/components/Layout';
 import { currencyFormat, dateFormat } from '@renovate-tracker/utils';
 import { useSession } from 'next-auth/react';
 
-export default function BudgetsPage() {
+function BudgetsPageContent() {
   const { data: session } = useSession();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -204,5 +204,19 @@ export default function BudgetsPage() {
       </div>
     </Layout>
   );
+}
+
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+
+export default async function BudgetsPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  return <BudgetsPageContent />;
 }
 

@@ -8,7 +8,7 @@ import { CurrencyInput } from '@/components/CurrencyInput';
 import { currencyFormat, dateFormat } from '@renovate-tracker/utils';
 import { useSession } from 'next-auth/react';
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const { data: session } = useSession();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,5 +270,19 @@ export default function ProjectsPage() {
       </div>
     </Layout>
   );
+}
+
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+
+export default async function ProjectsPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  return <ProjectsPageContent />;
 }
 

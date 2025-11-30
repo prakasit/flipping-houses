@@ -8,7 +8,7 @@ import { Drawer } from '@/components/Drawer';
 import { CurrencyInput } from '@/components/CurrencyInput';
 import { currencyFormat, dateFormat } from '@renovate-tracker/utils';
 
-export default function ExpensesPage() {
+function ExpensesPageContent() {
   const router = useRouter();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -266,5 +266,19 @@ export default function ExpensesPage() {
       </div>
     </Layout>
   );
+}
+
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+
+export default async function ExpensesPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  return <ExpensesPageContent />;
 }
 

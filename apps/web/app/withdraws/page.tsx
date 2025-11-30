@@ -8,7 +8,7 @@ import { CurrencyInput } from '@/components/CurrencyInput';
 import { currencyFormat, dateFormat } from '@renovate-tracker/utils';
 import { useSession } from 'next-auth/react';
 
-export default function WithdrawsPage() {
+function WithdrawsPageContent() {
   const { data: session } = useSession();
   const [withdraws, setWithdraws] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -280,5 +280,19 @@ export default function WithdrawsPage() {
       </div>
     </Layout>
   );
+}
+
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
+
+export default async function WithdrawsPage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session) {
+    redirect('/login');
+  }
+  
+  return <WithdrawsPageContent />;
 }
 
