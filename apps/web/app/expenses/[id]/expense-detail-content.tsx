@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Layout } from '@/components/Layout';
+import { ImageModal } from '@/components/ImageModal';
 import { currencyFormat, dateFormat } from '@renovate-tracker/utils';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -15,6 +16,7 @@ export default function ExpenseDetailPageContent() {
   const [expense, setExpense] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<{ url: string; name: string; type: 'image' | 'pdf' | 'other' } | null>(null);
 
   useEffect(() => {
     if (params.id && params.id !== 'new') {
@@ -169,32 +171,97 @@ export default function ExpenseDetailPageContent() {
               />
             </label>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {expense.slips.map((slip: any) => (
-              <div key={slip.id} className="border border-gray-200 rounded-lg p-4">
-                <a
-                  href={slip.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      {slip.fileUrl.split('/').pop()}
-                    </span>
-                    <span className="text-primary-600 text-sm">View →</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {dateFormat(slip.uploadedAt, 'short')}
-                  </p>
-                </a>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {expense.slips.map((slip: any) => {
+              const fileName = slip.fileUrl.split('/').pop() || '';
+              const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileName);
+              const isPdf = /\.pdf$/i.test(fileName);
+              
+              return (
+                <div key={slip.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 cursor-pointer hover:border-primary-500 dark:hover:border-primary-400 transition-colors">
+                  {isImage ? (
+                    <div
+                      onClick={() => setSelectedDocument({ url: slip.fileUrl, name: fileName, type: 'image' })}
+                      className="block"
+                    >
+                      <div className="w-full h-64 bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={slip.fileUrl}
+                          alt={fileName}
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={fileName}>
+                          {fileName}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          {dateFormat(slip.uploadedAt, 'short')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : isPdf ? (
+                    <div className="relative">
+                      <div
+                        onClick={() => setSelectedDocument({ url: slip.fileUrl, name: fileName, type: 'pdf' })}
+                        className="cursor-pointer"
+                      >
+                        <div className="w-full h-64 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                          <iframe
+                            src={slip.fileUrl}
+                            className="w-full h-full border-0 pointer-events-none"
+                            title={fileName}
+                          />
+                        </div>
+                        <div className="p-3">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={fileName}>
+                            {fileName}
+                          </p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            {dateFormat(slip.uploadedAt, 'short')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => setSelectedDocument({ url: slip.fileUrl, name: fileName, type: 'other' })}
+                      className="block p-4 cursor-pointer"
+                    >
+                      <div className="flex items-center justify-center h-32 bg-gray-100 dark:bg-gray-700 rounded">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate" title={fileName}>
+                          {fileName}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          {dateFormat(slip.uploadedAt, 'short')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           {expense.slips.length === 0 && (
             <p className="text-sm text-gray-500 text-center py-8">No slips uploaded yet</p>
           )}
         </div>
+
+        {/* Image Modal */}
+        {selectedDocument && (
+          <ImageModal
+            isOpen={!!selectedDocument}
+            onClose={() => setSelectedDocument(null)}
+            fileUrl={selectedDocument.url}
+            fileName={selectedDocument.name}
+            fileType={selectedDocument.type}
+          />
+        )}
       </div>
     </Layout>
   );

@@ -83,3 +83,5 @@ PWA จะถูก disable ใน development mode เพื่อให้ dev
 2. ตรวจสอบ Console > Application > Service Workers
 3. Unregister service worker เก่าและ reload
 
+
+
